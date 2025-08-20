@@ -1,0 +1,18 @@
+# Compiled object files
+*.o
+*.obj
+
+# Executables
+*.exe 
+*.out
+
+# Ignore generated dlls, keep external ones
+*.dll 
+!external/**/*.dll
+
+# Ignore libraries compiled, keep external ones
+*.lib 
+!external/**/*.lib
+
+# VSCode
+.vscode/

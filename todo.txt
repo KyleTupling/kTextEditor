@@ -1,0 +1,13 @@
+- Font selection (GUI)
+- Fix maximising window
+    - Keep track of previous window pos, size for restore
+- Window resizing
+- Provide infobar with viewport
+- Highlighting text
+- CTRL + ... events
+- Move colours, spacing etc to config file (allow for themes)
+
+LOW PRIORITY
+------------------------
+- Horizontal scrolling
+- Smarter vertical cursor movement
