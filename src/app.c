@@ -105,12 +105,14 @@ void app_run(App* app)
         }
         else if (app->state == APP_STATE_FILE_DIALOG)
         {
+            SDL_RenderSetViewport(app->renderer->sdl_renderer, &editor_bounds);
             dialog.x = editor_bounds.x;
             dialog.y = editor_bounds.y;
             dialog.w = editor_bounds.w;
             dialog.h = editor_bounds.h;
             //kFileDialog_open(&dialog);
             kFileDialog_render(&dialog, app->renderer);
+            SDL_RenderSetViewport(app->renderer->sdl_renderer, NULL);
         }
 
         Uint32 flags = SDL_GetWindowFlags(app->window.sdl_window);
