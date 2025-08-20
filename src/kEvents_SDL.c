@@ -64,9 +64,9 @@ static kKeycode translate_key(SDL_Keycode sym)
 static kKeymod translate_mod(Uint16 mod)
 {
     kKeycode m = KMOD_NONE;
-    if (mod & KMOD_SHIFT) m |= KMOD_SHIFT;
-    if (mod & KMOD_CTRL)  m |= KMOD_CTRL;
-    if (mod & KMOD_ALT)   m |= KMOD_ALT;
+    if (mod & KKEYMOD_SHIFT) m |= KKEYMOD_SHIFT;
+    if (mod & KKEYMOD_CTRL)  m |= KKEYMOD_CTRL;
+    if (mod & KKEYMOD_ALT)   m |= KKEYMOD_ALT;
     return m;
 }
 
