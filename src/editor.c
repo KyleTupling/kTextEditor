@@ -25,6 +25,12 @@ void editor_init(Editor* e)
     e->cursor_alpha = 1.0f;
     e->cursor_blink_duration = 1.2f;
     e->cursor_cooldown = 1.0f;
+
+    e->is_selecting = false;
+    e->selection_start_line = 0;
+    e->selection_start_col = 0;
+    e->selection_end_line = 0;
+    e->selection_end_col = 0;
     
     e->text_changed = false;
     e->is_saved = true;
@@ -212,7 +218,6 @@ void editor_backspace(Editor* e)
     e->text_changed = true;
 }
 
-//TODO: Create custom keycode track to bind with SDL keycodes?
 void editor_handle_key(Editor* e, kKeycode key, kKeymod mod)
 {
     char* line = e->lines[e->cursor_line];
@@ -245,33 +250,76 @@ void editor_handle_key(Editor* e, kKeycode key, kKeymod mod)
             }
             break;
 
-        case 1073741904: // LEFT
-            if (e->cursor_col > 0) e->cursor_col--;
-            else if (e->cursor_line > 0) 
+        case KKEY_LEFT: // LEFT
+            if (mod == KKEYMOD_SHIFT)
             {
-                e->cursor_line--;
-                e->cursor_col = strlen(e->lines[e->cursor_line]);
+                if (!e->is_selecting)
+                {
+                    e->selection_start_line = e->cursor_line;
+                    e->selection_start_col  = e->cursor_col;
+                    e->is_selecting = true;
+                }
+                
+                if (e->cursor_col > 0) e->cursor_col--;
+                else if (e->cursor_line > 0) 
+                {
+                    e->cursor_line--;
+                    e->cursor_col = strlen(e->lines[e->cursor_line]);
+                }
+                e->selection_end_line = e->cursor_line;
+                e->selection_end_col = e->cursor_col;
             }
+            else
+            {
+                if (e->cursor_col > 0) e->cursor_col--;
+                else if (e->cursor_line > 0) 
+                {
+                    e->cursor_line--;
+                    e->cursor_col = strlen(e->lines[e->cursor_line]);
+                }
+                e->is_selecting = false;
+            }
+
             e->cursor_cooldown = 1.0f;
             break;
 
-        case 1073741903: // RIGHT
-            if (e->cursor_col < strlen(line)) e->cursor_col++;
-            else if (e->cursor_line + 1 < e->num_lines) 
+        case KKEY_RIGHT: // RIGHT
+            // If shift is held, start or continue text selection
+            // Otherwise, move cursor and disable text selection
+            if (mod == KKEYMOD_SHIFT)
             {
-                e->cursor_line++;
-                e->cursor_col = 0;
-            }
-            e->cursor_cooldown = 1.0f;
+                if (!e->is_selecting)
+                {
+                    e->selection_start_line = e->cursor_line;
+                    e->selection_start_col  = e->cursor_col;
+                    e->is_selecting = true;
+                }
 
-            // e->selection_start_line = e->cursor_line;
-            // e->selection_start_col = e->cursor_col;
-            // e->selection_end_line = e->cursor_line;
-            // e->selection_end_col = e->cursor_col + 1;
-            e->is_selecting = true;
+                if (e->cursor_col < strlen(line)) e->cursor_col++;
+                else if (e->cursor_line + 1 < e->num_lines) 
+                {
+                    e->cursor_line++;
+                    e->cursor_col = 0;
+                }
+
+                e->selection_end_line = e->cursor_line;
+                e->selection_end_col = e->cursor_col;
+            }
+            else
+            {
+                if (e->cursor_col < strlen(line)) e->cursor_col++;
+                else if (e->cursor_line + 1 < e->num_lines) 
+                {
+                    e->cursor_line++;
+                    e->cursor_col = 0;
+                }
+                e->is_selecting = false;
+            }
+            
+            e->cursor_cooldown = 1.0f;
             break;
 
-        case 1073741906: // UP
+        case KKEY_UP: // UP
             if (e->cursor_line > 0) 
             {
                 e->cursor_line--;
@@ -281,7 +329,7 @@ void editor_handle_key(Editor* e, kKeycode key, kKeymod mod)
             e->cursor_cooldown = 1.0f;
             break;
 
-        case 1073741905: // DOWN
+        case KKEY_DOWN: // DOWN
             if (e->cursor_line + 1 < e->num_lines) 
             {
                 e->cursor_line++;
@@ -291,11 +339,11 @@ void editor_handle_key(Editor* e, kKeycode key, kKeymod mod)
             e->cursor_cooldown = 1.0f;
             break;
 
-        case 1073741882: // F1
+        case KKEY_F1: // F1
             e->current_font = font_manager_get_font(font_manager_get_font_path(e->current_font), font_manager_get_font_size(e->current_font) + 1);
             break;
 
-        case 1073741886: // F5
+        case KKEY_F5: // F5
             editor_save_file(e);
 
         default:
