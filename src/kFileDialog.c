@@ -37,6 +37,8 @@ static void load_directory(kFileDialog* dialog, const char* path)
     closedir(dir);
 
     strncpy(dialog->current_path, path, sizeof(dialog->current_path) - 1);
+    dialog->scroll_offset = 0;
+    dialog->selected_index = -1;
 }
 
 static void set_selected_file(kFileDialog* dialog)
@@ -75,6 +77,41 @@ bool kFileDialog_is_open(kFileDialog* dialog)
     return dialog->is_open;
 }
 
+// Updates the vertical scroll offset to ensure the selected item is
+// visible in the viewport.
+static void kFileDialog_ensure_selection_visible(kFileDialog* dialog)
+{
+    int item_top    = FILE_DIALOG_PADDING + dialog->selected_index * (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_LINE_GAP);
+    int item_bottom = item_top + FILE_DIALOG_LINE_HEIGHT;
+
+    if (item_top < dialog->scroll_offset)
+    {
+        // Item is above viewport -> scroll up
+        dialog->scroll_offset = item_top - FILE_DIALOG_PADDING;
+    }
+    else if (item_bottom > dialog->scroll_offset + dialog->h)
+    {
+        // Item is below viewport -> scroll down
+        dialog->scroll_offset = item_bottom - dialog->h + FILE_DIALOG_PADDING / 2;
+    }
+}
+
+static void kFileDialog_clamp_scroll(kFileDialog* dialog)
+{
+    // Clamp so doesn't scroll beyond content
+    if (dialog->scroll_offset < 0)
+    {
+        dialog->scroll_offset = 0;
+    }
+
+    int content_height = FILE_DIALOG_PADDING + dialog->num_entries * (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_LINE_GAP);
+    int max_scroll = content_height > dialog->h ? content_height - dialog->h : 0;
+    if (dialog->scroll_offset > max_scroll)
+    {
+        dialog->scroll_offset = max_scroll;
+    }
+}
+
 void kFileDialog_handle_event(kFileDialog* dialog, kEvent* event)
 {
     if (!dialog->is_open) return;
@@ -83,6 +120,15 @@ void kFileDialog_handle_event(kFileDialog* dialog, kEvent* event)
     {
         int mx = event->button.x;
         int my = event->button.y;
+
+        int rel_x = mx - dialog->x;
+        int rel_y = my - dialog->y;
+
+        // Check if click is within dialog
+        if ((mx < dialog->x || mx > dialog->x + dialog->w) || (my < dialog->y || my > dialog->y + dialog->h))
+        {
+            return;
+        }
 
         // Directly map y-coordinate to line index
         int adjusted_y = my - dialog->y + dialog->scroll_offset;
@@ -127,22 +173,15 @@ void kFileDialog_handle_event(kFileDialog* dialog, kEvent* event)
                 }
                 break;
         }
+
+        kFileDialog_ensure_selection_visible(dialog);
+        kFileDialog_clamp_scroll(dialog);
     }
     else if (event->type == KEVENT_MOUSEWHEEL)
     {
         dialog->scroll_offset -= event->wheel.y * (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_PADDING);
 
-        // Clamp so doesn't scroll beyond content
-        if (dialog->scroll_offset < 0)
-        {
-            dialog->scroll_offset = 0;
-        }
-
-        int max_scroll = dialog->num_entries * (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_PADDING) - dialog->h;
-        if (dialog->scroll_offset > max_scroll)
-        {
-            dialog->scroll_offset = max_scroll;
-        }
+        kFileDialog_clamp_scroll(dialog);
     }
 }
 
@@ -151,11 +190,11 @@ void kFileDialog_render(kFileDialog* dialog, Renderer* renderer)
     if (!dialog->is_open) return;
 
     SDL_Color bg = {20, 20, 20, 255};
-    renderer_draw_rect(renderer, dialog->x, dialog->y, dialog->w, dialog->h, bg);
+    renderer_draw_rect(renderer, dialog->x, 0, dialog->w, dialog->h, bg);
 
     for (int i = 0; i < dialog->num_entries; i++)
     {
-        int item_y = dialog->y + FILE_DIALOG_PADDING + (i * (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_LINE_GAP)) - dialog->scroll_offset;
+        int item_y = 0 + FILE_DIALOG_PADDING + (i * (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_LINE_GAP)) - dialog->scroll_offset;
 
         SDL_Color color = {200, 200, 200, 255};
         if (i == dialog->selected_index)
