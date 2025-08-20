@@ -320,6 +320,11 @@ void editor_handle_key(Editor* e, kKeycode key, kKeymod mod)
             break;
 
         case KKEY_UP: // UP
+            if (!mod == KKEYMOD_SHIFT)
+            {
+                e->is_selecting = false;
+            }
+
             if (e->cursor_line > 0) 
             {
                 e->cursor_line--;
