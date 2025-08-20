@@ -1,3 +1,7 @@
+#pragma once
+
+#define KTEXTINPUTEVENT_TEXT_SIZE 32
+
 typedef enum {
     KEVENT_NONE = 0,
     KEVENT_QUIT,
@@ -6,7 +10,8 @@ typedef enum {
     KEVENT_MOUSEBUTTONDOWN,
     KEVENT_MOUSEBUTTONUP,
     KEVENT_MOUSEMOTION,
-    KEVENT_MOUSEWHEEL
+    KEVENT_MOUSEWHEEL,
+    KEVENT_TEXTINPUT
 } kEventType;
 
 typedef enum {
@@ -60,16 +65,16 @@ typedef enum {
 
 // Modifier flags
 typedef enum {
-    KMOD_NONE  = 0,
-    KMOD_SHIFT = 1 << 0,
-    KMOD_CTRL  = 1 << 1,
-    KMOD_ALT   = 1 << 2
+    KKEYMOD_NONE  = 0,
+    KKEYMOD_SHIFT = 1 << 0,
+    KKEYMOD_CTRL  = 1 << 1,
+    KKEYMOD_ALT   = 1 << 2
 } kKeymod;
 
 typedef enum {
-    KMOUSE_LEFT   = 1,
-    KMOUSE_MIDDLE = 2,
-    KMOUSE_RIGHT  = 3,
+    KMOUSEBUTTON_LEFT   = 1,
+    KMOUSEBUTTON_MIDDLE = 2,
+    KMOUSEBUTTON_RIGHT  = 3,
 } kMouseButton;
 
 typedef struct {
@@ -93,6 +98,10 @@ typedef struct {
         struct {
             int x, y;
         } wheel;
+
+        struct {
+            char text[KTEXTINPUTEVENT_TEXT_SIZE];
+        } text;
     };
 } kEvent;
 

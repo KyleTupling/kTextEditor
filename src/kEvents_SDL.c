@@ -5,6 +5,7 @@
 
 #include "kEvents.h"
 #include <SDL.h>
+#include <string.h>
 
 static kKeycode translate_key(SDL_Keycode sym)
 {
@@ -118,6 +119,14 @@ int kPollEvent(kEvent* ev)
             ev->type = KEVENT_MOUSEWHEEL;
             ev->wheel.x = sdl_ev.wheel.x;
             ev->wheel.y = sdl_ev.wheel.y;
+            break;
+
+        case SDL_TEXTINPUT:
+            ev->type = KEVENT_TEXTINPUT;
+            size_t len = strlen(sdl_ev.text.text);
+            size_t copy_len = (len < KTEXTINPUTEVENT_TEXT_SIZE - 1) ? len : KTEXTINPUTEVENT_TEXT_SIZE;
+            memcpy(ev->text.text, sdl_ev.text.text, copy_len);
+            ev->text.text[copy_len] = '\0';
             break;
 
         default:

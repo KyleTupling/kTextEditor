@@ -99,12 +99,12 @@ void window_add_button(kWindow* win, kWindowButton btn)
     win->window_buttons[win->num_window_buttons++] = btn;
 }
 
-void window_handle_event(kWindow* win, SDL_Event* e)
+void window_handle_event(kWindow* win, kEvent* e)
 {
     switch (e->type)
     {
-        case SDL_MOUSEBUTTONDOWN:
-            if (e->button.button == SDL_BUTTON_LEFT)
+        case KEVENT_MOUSEBUTTONDOWN:
+            if (e->button.button == KMOUSEBUTTON_LEFT)
             {
                 int mx, my;
                 SDL_GetGlobalMouseState(&mx, &my); // global screen coords
@@ -130,14 +130,14 @@ void window_handle_event(kWindow* win, SDL_Event* e)
             }
             break;
         
-        case SDL_MOUSEBUTTONUP:
-            if (e->button.button == SDL_BUTTON_LEFT)
+        case KEVENT_MOUSEBUTTONUP:
+            if (e->button.button == KMOUSEBUTTON_LEFT)
             {
                 win->is_dragging = false;
             }
             break;
 
-        case SDL_MOUSEMOTION:
+        case KEVENT_MOUSEMOTION:
             int mx, my;
             SDL_GetGlobalMouseState(&mx, &my);
 

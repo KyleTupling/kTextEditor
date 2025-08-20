@@ -128,9 +128,9 @@ void editor_backspace(Editor* e);
  * 
  * @note The key is taken as an int, assumed converted from framework's keycode
  */
-void editor_handle_key(Editor* e, int key); // Assume input convert SDL keycode to int
+void editor_handle_key(Editor* e, kKeycode key, kKeymod mod); // Assume input convert SDL keycode to int
 
-void editor_handle_mouse_button(Editor* e, kMouseButton btn);
+void editor_handle_mouse_down(Editor* e, kMouseButton btn);
 
 void editor_handle_mouse_motion(Editor* e);
 

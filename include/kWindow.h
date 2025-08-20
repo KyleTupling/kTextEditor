@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include <stdbool.h>
 #include "renderer.h"
+#include "kEvents.h"
 
 #define TITLEBAR_HEIGHT 30
 
@@ -84,7 +85,7 @@ void window_add_button(kWindow* win, kWindowButton btn);
  * @param win Pointer to window
  * @param e Pointer to SDL event
  */
-void window_handle_event(kWindow* win, SDL_Event* e);
+void window_handle_event(kWindow* win, kEvent* e);
 
 /**
  * Maximises the window

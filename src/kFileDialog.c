@@ -75,11 +75,11 @@ bool kFileDialog_is_open(kFileDialog* dialog)
     return dialog->is_open;
 }
 
-void kFileDialog_handle_event(kFileDialog* dialog, SDL_Event* event)
+void kFileDialog_handle_event(kFileDialog* dialog, kEvent* event)
 {
     if (!dialog->is_open) return;
 
-    if (event->type == SDL_MOUSEBUTTONDOWN && event->button.button == SDL_BUTTON_LEFT)
+    if (event->type == KEVENT_MOUSEBUTTONDOWN && event->button.button == KMOUSEBUTTON_LEFT)
     {
         int mx = event->button.x;
         int my = event->button.y;
@@ -102,25 +102,25 @@ void kFileDialog_handle_event(kFileDialog* dialog, SDL_Event* event)
             }
         }
     }
-    else if (event->type == SDL_KEYDOWN)
+    else if (event->type == KEVENT_KEYDOWN)
     {
-        switch (event->key.keysym.sym)
+        switch (event->key.sym)
         {
-            case SDLK_DOWN:
+            case KKEY_DOWN:
                 if (dialog->selected_index + 1 < dialog->num_entries)
                 {
                     dialog->selected_index++;
                 }
                 break;
 
-            case SDLK_UP:
+            case KKEY_UP:
                 if (dialog->selected_index - 1 >= 0)
                 {
                     dialog->selected_index--;
                 }
                 break;
 
-            case SDLK_RETURN:
+            case KKEY_RETURN:
                 if (dialog->selected_index >= 0 && !is_directory(dialog, dialog->entries[dialog->selected_index]))
                 {
                     set_selected_file(dialog);
@@ -128,7 +128,7 @@ void kFileDialog_handle_event(kFileDialog* dialog, SDL_Event* event)
                 break;
         }
     }
-    else if (event->type == SDL_MOUSEWHEEL)
+    else if (event->type == KEVENT_MOUSEWHEEL)
     {
         dialog->scroll_offset -= event->wheel.y * (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_PADDING);
 

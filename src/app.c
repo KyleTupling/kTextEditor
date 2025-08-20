@@ -41,7 +41,7 @@ bool app_init(App* app)
 void app_run(App* app)
 {
     bool running = true;
-    SDL_Event event;
+    kEvent event;
 
     Uint32 last_tick = SDL_GetTicks();
 
@@ -53,13 +53,16 @@ void app_run(App* app)
 
         app->editor.text_changed = false;
 
-        while (SDL_PollEvent(&event))
+        while (kPollEvent(&event))
         {
-            if (event.type == SDL_QUIT) running = false;
+            if (event.type == KEVENT_QUIT) running = false;
             else
             {
+                // Send event to window
                 window_handle_event(&app->window, &event);
-                //titlebar_handle_event(&app->titlebar, &event, &running, app->window.sdl_window);
+
+                // If in editor state, send event to editor event handler
+                // Else if in file dialog state, send event to file dialog
                 if (app->state == APP_STATE_EDITOR)
                 {
                     input_handle_event(&app->editor, &event);  
@@ -76,9 +79,9 @@ void app_run(App* app)
                         app->state = APP_STATE_EDITOR;
                     }
                 } 
-                
-
-                if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F4)
+            
+                // Switch to file dialog state on F4
+                if (event.type == KEVENT_KEYDOWN && event.key.sym == KKEY_F4)
                 {
                     kFileDialog_open(&dialog);
                     app->state = APP_STATE_FILE_DIALOG;

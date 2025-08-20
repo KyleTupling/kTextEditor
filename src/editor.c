@@ -213,24 +213,24 @@ void editor_backspace(Editor* e)
 }
 
 //TODO: Create custom keycode track to bind with SDL keycodes?
-void editor_handle_key(Editor* e, int key)
+void editor_handle_key(Editor* e, kKeycode key, kKeymod mod)
 {
     char* line = e->lines[e->cursor_line];
 
     switch (key)
     {
-        case 8: // Backspace
+        case KKEY_BACKSPACE: // Backspace
             editor_backspace(e);
             break;
 
-        case 9: // Tab
+        case KKEY_TAB: // Tab
             editor_insert_char(e, ' ');
             editor_insert_char(e, ' ');
             editor_insert_char(e, ' ');
             editor_insert_char(e, ' ');
             break;
 
-        case 13: // Return
+        case KKEY_RETURN: // Return
             if (e->num_lines < MAX_LINES) 
             {
                 for (int i = e->num_lines; i > e->cursor_line + 1; i--) 
@@ -303,12 +303,12 @@ void editor_handle_key(Editor* e, int key)
     }
 }
 
-void editor_handle_mouse_button(Editor* e, kMouseButton btn)
+void editor_handle_mouse_down(Editor* e, kMouseButton btn)
 {
-    if (btn == K_MOUSE_BUTTON_LEFT)
-    {
+    // if (btn == K_MOUSE_BUTTON_LEFT)
+    // {
         
-    }
+    // }
 }
 
 void editor_handle_scroll_y(Editor* e, Sint32 wheel_y)

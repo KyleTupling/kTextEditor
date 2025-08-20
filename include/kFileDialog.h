@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include "renderer.h"
+#include "kEvents.h"
 
 #define FILE_DIALOG_LINE_HEIGHT 30
 #define FILE_DIALOG_PADDING 10
@@ -65,7 +66,7 @@ bool kFileDialog_is_open(kFileDialog* dialog);
  * @param dialog Pointer to kFileDialog
  * @param event Pointer to SDL event
  */
-void kFileDialog_handle_event(kFileDialog* dialog, SDL_Event* event);
+void kFileDialog_handle_event(kFileDialog* dialog, kEvent* event);
 
 /**
  * Renders the given dialog.
