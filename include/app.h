@@ -8,8 +8,8 @@
 #include "renderer.h"
 #include "editor.h"
 
-#define WINDOW_WIDTH  1000
-#define WINDOW_HEIGHT 600
+#define WINDOW_WIDTH  1200
+#define WINDOW_HEIGHT 800
 
 typedef enum {
     APP_STATE_EDITOR,
