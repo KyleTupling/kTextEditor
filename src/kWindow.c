@@ -39,6 +39,9 @@ kWindow window_create(const char* title, int x, int y, int w, int h, Uint32 flag
     close_btn.hover_color = close_btn_hovered_color;
     close_btn.is_hovered = false;
     close_btn.on_click = close_button_clicked;
+    ColorTransition ct;
+    color_transition_init(&ct, base_btn_color, close_btn_hovered_color, 0.2f, NULL);
+    close_btn.color_transition = ct;
 
     window_add_button(&win, close_btn);
     
@@ -60,6 +63,19 @@ void window_destroy(kWindow* win)
     }
 }
 
+void window_update(kWindow* win, float dt)
+{
+    for (size_t i = 0; i < win->num_window_buttons; i++)
+    {
+        kWindowButton* current_btn = &win->window_buttons[i];
+
+        if (current_btn->color_transition.active)
+        {
+            color_transition_update(&current_btn->color_transition, dt);
+        }
+    }
+}
+
 void window_render(kWindow* win, Renderer* r)
 {
     // Titlebar
@@ -77,7 +93,8 @@ void window_render(kWindow* win, Renderer* r)
         float pos_x = current_btn->rel_x * win->width;
         float width = current_btn->rel_width * win->width;
 
-        SDL_Color btn_color = current_btn->is_hovered ? current_btn->hover_color : current_btn->base_color;
+        //SDL_Color btn_color = current_btn->is_hovered ? current_btn->hover_color : current_btn->base_color;
+        SDL_Color btn_color = color_transition_get(&current_btn->color_transition);
         renderer_draw_rect(r, pos_x, 0, width, TITLEBAR_HEIGHT, btn_color);
 
         if (current_btn->text)
@@ -157,19 +174,25 @@ void window_handle_event(kWindow* win, kEvent* e)
                 for (size_t i = 0; i < win->num_window_buttons; i++)
                 {
                     // Default all buttons to unhovered
-                    win->window_buttons[i].is_hovered = false;
+                    //win->window_buttons[i].is_hovered = false;
 
                     // If mouse_y beyond titlebar, skip
-                    if (local_my > TITLEBAR_HEIGHT) continue;
+                    //if (local_my > TITLEBAR_HEIGHT) continue;
 
                     float btn_start = win->window_buttons[i].rel_x * win->width;
                     float btn_end = btn_start + win->window_buttons[i].rel_width * win->width;
+
+                    bool hovering = (local_mx > btn_start && local_mx < btn_end && local_my < TITLEBAR_HEIGHT);
                     
-                    if (local_mx > btn_start &&
-                        local_mx < btn_end)
+                    if (hovering && !win->window_buttons[i].is_hovered)
                     {
-                        win->window_buttons[i].is_hovered = true;
+                        color_transition_start(&win->window_buttons[i].color_transition, true);
                     }
+                    else if (!hovering && win->window_buttons[i].is_hovered)
+                    {
+                        color_transition_start(&win->window_buttons[i].color_transition, false);
+                    }
+                    win->window_buttons[i].is_hovered = hovering;
                 }
             }
             break;

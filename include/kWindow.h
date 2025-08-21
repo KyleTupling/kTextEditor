@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "renderer.h"
 #include "kEvents.h"
+#include "kAnimations.h"
 
 #define TITLEBAR_HEIGHT 30
 
@@ -22,6 +23,8 @@ struct kWindowButton {
     bool is_hovered;        // Whether button is currently hovered
 
     void (*on_click)(kWindowButton* btn); // Callback for on-click
+
+    ColorTransition color_transition;
 };
 
 typedef struct {
@@ -61,6 +64,14 @@ kWindow window_create(const char* title, int x, int y, int w, int h, Uint32 flag
  * @param win Pointer to window
  */
 void window_destroy(kWindow* win);
+
+/**
+ * Updates logic associated with the window.
+ * 
+ * @param win Pointer to window
+ * @param dt Time (seconds) since last frame
+ */
+void window_update(kWindow* win, float dt);
 
 /**
  * Renders the window and associated components.
