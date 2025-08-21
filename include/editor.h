@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 #include "renderer.h"
 #include "kEvents.h"
 
@@ -18,6 +19,7 @@ typedef struct {
     char original_lines[MAX_LINES][MAX_LINE_LENGTH];
     int num_lines;                          // Current number of lines
 
+    int scroll_offset_x;                    // Horizontal scroll
     int scroll_offset_y;                    // Vertical scroll
 
     int cursor_line;                        // Current cursor line
@@ -26,6 +28,9 @@ typedef struct {
     float cursor_alpha;                     // Current cursor alpha
     float cursor_blink_duration;            // Duration of cursor blink
     float cursor_cooldown;                  // Time until blink effect begins
+
+    int cursor_margin_lines_y;               // Number of lines that must always remain in view
+                                             // below the cursor
 
     bool is_selecting;
     int selection_start_line;
@@ -37,13 +42,14 @@ typedef struct {
                                             // the last frame
 
     bool is_saved;                          // Whether file is currently saved
-    bool needs_save_check;                  // Whether a save check needs to be 
+    //bool needs_save_check;                  // Whether a save check needs to be 
                                             // performed
 
     char current_file[MAX_FILENAME_LENGTH]; // Current file name
 
     TTF_Font* current_font;                 // Current font
 
+    int viewport_width;
     int viewport_height;                    // Height of the viewport in which the 
                                             // editor is rendered
 } Editor;
@@ -130,7 +136,7 @@ void editor_backspace(Editor* e);
  */
 void editor_handle_key(Editor* e, kKeycode key, kKeymod mod); // Assume input convert SDL keycode to int
 
-void editor_handle_mouse_down(Editor* e, kMouseButton btn);
+void editor_handle_mouse_down(Editor* e, kMouseButtonEvent btn);
 
 void editor_handle_mouse_motion(Editor* e);
 
@@ -140,7 +146,7 @@ void editor_handle_mouse_motion(Editor* e);
  * @param e Pointer to the editor state
  * @param wheel_y The vertical scroll amount
  */
-void editor_handle_scroll_y(Editor* e, Sint32 wheel_y);
+void editor_handle_scroll(Editor* e, kMouseWheelEvent wheel);
 
 /**
  * Renders the editor
