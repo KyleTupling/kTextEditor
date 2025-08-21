@@ -9,7 +9,7 @@ void input_handle_event(Editor* e, kEvent* ev)
     switch (ev->type)
     {
         case KEVENT_MOUSEBUTTONDOWN:
-            editor_handle_mouse_down(e, ev->button.button); 
+            editor_handle_mouse_down(e, ev->button); 
             break;
 
         case KEVENT_MOUSEMOTION:
@@ -20,7 +20,7 @@ void input_handle_event(Editor* e, kEvent* ev)
             break;
 
         case KEVENT_MOUSEWHEEL:
-            editor_handle_scroll_y(e, ev->wheel.y);
+            editor_handle_scroll(e, ev->wheel);
             break;
         
         case KEVENT_TEXTINPUT:
