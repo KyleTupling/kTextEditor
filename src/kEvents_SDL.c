@@ -98,6 +98,7 @@ int kPollEvent(kEvent* ev)
             ev->button.x = sdl_ev.button.x;
             ev->button.y = sdl_ev.button.y;
             ev->button.button = sdl_ev.button.button; // already matches
+            ev->button.clicks = sdl_ev.button.clicks;
             break;
 
         case SDL_MOUSEBUTTONUP:
@@ -119,6 +120,7 @@ int kPollEvent(kEvent* ev)
             ev->type = KEVENT_MOUSEWHEEL;
             ev->wheel.x = sdl_ev.wheel.x;
             ev->wheel.y = sdl_ev.wheel.y;
+            ev->wheel.mod = translate_mod(SDL_GetModState());
             break;
 
         case SDL_TEXTINPUT:
