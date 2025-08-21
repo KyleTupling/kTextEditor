@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <limits.h> // used for PATH_MAX
 #include "renderer.h"
 #include "font_manager.h"
 #include "editor.h"
@@ -29,6 +30,12 @@ static void load_directory(kFileDialog* dialog, const char* path)
     {
         if (dialog->num_entries < 256)
         {
+            // Skip current directory "."
+            if (strcmp(entry->d_name, ".") == 0)
+            {
+                continue;
+            }
+
             strncpy(dialog->entries[dialog->num_entries], entry->d_name, 255);
             dialog->entries[dialog->num_entries][255] = '\0';
             dialog->num_entries++;
@@ -36,7 +43,21 @@ static void load_directory(kFileDialog* dialog, const char* path)
     }
     closedir(dir);
 
-    strncpy(dialog->current_path, path, sizeof(dialog->current_path) - 1);
+    // Resolve absolute path
+    char abs_path[PATH_MAX];
+    if(_fullpath(abs_path, path, PATH_MAX) != NULL)
+    {
+        strncpy(dialog->current_path, abs_path, sizeof(dialog->current_path) - 1);
+        dialog->current_path[sizeof(dialog->current_path) - 1] = '\0';
+    }
+    else
+    {
+        // Fallback to relative path if resolving failed
+        strncpy(dialog->current_path, path, sizeof(dialog->current_path) - 1);
+        dialog->current_path[sizeof(dialog->current_path) - 1] = '\0';
+    }
+
+    //strncpy(dialog->current_path, path, sizeof(dialog->current_path) - 1);
     dialog->scroll_offset = 0;
     dialog->selected_index = -1;
 }
@@ -81,18 +102,23 @@ bool kFileDialog_is_open(kFileDialog* dialog)
 // visible in the viewport.
 static void kFileDialog_ensure_selection_visible(kFileDialog* dialog)
 {
-    int item_top    = FILE_DIALOG_PADDING + dialog->selected_index * (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_LINE_GAP);
+    int item_top    = GET_ITEM_TOP(dialog->selected_index);
     int item_bottom = item_top + FILE_DIALOG_LINE_HEIGHT;
 
-    if (item_top < dialog->scroll_offset)
+    // Current viewport range
+    int view_height = dialog->h - FILE_DIALOG_INFOBAR_HEIGHT;
+    int view_top = dialog->scroll_offset;
+    int view_bottom = dialog->scroll_offset + view_height;
+
+    if (item_top < view_top)
     {
         // Item is above viewport -> scroll up
         dialog->scroll_offset = item_top - FILE_DIALOG_PADDING;
     }
-    else if (item_bottom > dialog->scroll_offset + dialog->h)
+    else if (item_bottom > view_bottom)
     {
         // Item is below viewport -> scroll down
-        dialog->scroll_offset = item_bottom - dialog->h + FILE_DIALOG_PADDING / 2;
+        dialog->scroll_offset = item_bottom - view_height + FILE_DIALOG_LINE_GAP;
     }
 }
 
@@ -104,7 +130,7 @@ static void kFileDialog_clamp_scroll(kFileDialog* dialog)
         dialog->scroll_offset = 0;
     }
 
-    int content_height = FILE_DIALOG_PADDING + dialog->num_entries * (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_LINE_GAP);
+    int content_height = GET_ITEM_TOP(dialog->num_entries) + FILE_DIALOG_LINE_HEIGHT;
     int max_scroll = content_height > dialog->h ? content_height - dialog->h : 0;
     if (dialog->scroll_offset > max_scroll)
     {
@@ -125,26 +151,31 @@ void kFileDialog_handle_event(kFileDialog* dialog, kEvent* event)
         int rel_y = my - dialog->y;
 
         // Check if click is within dialog
-        if ((mx < dialog->x || mx > dialog->x + dialog->w) || (my < dialog->y || my > dialog->y + dialog->h))
+        if ((mx < dialog->x || mx > dialog->x + dialog->w) || (my < dialog->y + FILE_DIALOG_INFOBAR_HEIGHT || my > dialog->y + dialog->h))
         {
             return;
         }
 
         // Directly map y-coordinate to line index
         int adjusted_y = my - dialog->y + dialog->scroll_offset;
-        int index = (my - dialog->y - FILE_DIALOG_PADDING + dialog->scroll_offset) / (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_LINE_GAP);
+        int index = (my - dialog->y - FILE_DIALOG_PADDING - FILE_DIALOG_INFOBAR_HEIGHT + dialog->scroll_offset) / (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_LINE_GAP);
 
         if (index >= 0 && index < dialog->num_entries) {
-            dialog->selected_index = index;
-
-            if (is_directory(dialog, dialog->entries[index])) {
-                char new_path[512];
-                snprintf(new_path, sizeof(new_path), "%s/%s",
-                            dialog->current_path,
-                            dialog->entries[index]);
-                load_directory(dialog, new_path);
-            } else {
-                set_selected_file(dialog);
+            if (event->button.clicks == 1)
+            {
+                dialog->selected_index = index;
+            }
+            else if (event->button.clicks == 2)
+            {
+                if (is_directory(dialog, dialog->entries[index])) {
+                    char new_path[512];
+                    snprintf(new_path, sizeof(new_path), "%s/%s",
+                                dialog->current_path,
+                                dialog->entries[index]);
+                    load_directory(dialog, new_path);
+                } else {
+                    set_selected_file(dialog);
+                }
             }
         }
     }
@@ -167,9 +198,20 @@ void kFileDialog_handle_event(kFileDialog* dialog, kEvent* event)
                 break;
 
             case KKEY_RETURN:
-                if (dialog->selected_index >= 0 && !is_directory(dialog, dialog->entries[dialog->selected_index]))
+                if (dialog->selected_index >= 0)
                 {
-                    set_selected_file(dialog);
+                    if (is_directory(dialog, dialog->entries[dialog->selected_index]))
+                    {
+                        char new_path[512];
+                        snprintf(new_path, sizeof(new_path), "%s/%s",
+                                    dialog->current_path,
+                                    dialog->entries[dialog->selected_index]);
+                        load_directory(dialog, new_path);
+                    }
+                    else
+                    {
+                        set_selected_file(dialog);
+                    }
                 }
                 break;
         }
@@ -192,9 +234,16 @@ void kFileDialog_render(kFileDialog* dialog, Renderer* renderer)
     SDL_Color bg = {20, 20, 20, 255};
     renderer_draw_rect(renderer, dialog->x, 0, dialog->w, dialog->h, bg);
 
+    SDL_Color infobar_bg = {30, 30, 30, 255};
+    renderer_draw_rect(renderer, dialog->x, 0, dialog->w, FILE_DIALOG_INFOBAR_HEIGHT, infobar_bg);
+
+    renderer_draw_text(renderer, dialog->current_path, 10, 5, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 14), ALIGN_LEFT, COLOR_WHITE);
+
     for (int i = 0; i < dialog->num_entries; i++)
     {
-        int item_y = 0 + FILE_DIALOG_PADDING + (i * (FILE_DIALOG_LINE_HEIGHT + FILE_DIALOG_LINE_GAP)) - dialog->scroll_offset;
+        int item_y = GET_ITEM_TOP(i) + FILE_DIALOG_INFOBAR_HEIGHT - dialog->scroll_offset;
+
+        if (item_y + FILE_DIALOG_LINE_HEIGHT < FILE_DIALOG_PADDING + FILE_DIALOG_INFOBAR_HEIGHT) continue;
 
         SDL_Color color = {200, 200, 200, 255};
         if (i == dialog->selected_index)
