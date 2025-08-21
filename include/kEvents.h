@@ -78,6 +78,17 @@ typedef enum {
 } kMouseButton;
 
 typedef struct {
+    int x, y;
+    kMouseButton button;
+    int clicks;
+} kMouseButtonEvent;
+
+typedef struct {
+    int x, y;
+    kKeymod mod;
+} kMouseWheelEvent;
+
+typedef struct {
     kEventType type;
     union {
         struct {
@@ -85,19 +96,14 @@ typedef struct {
             kKeymod  mod;
         } key;
 
-        struct {
-            int x, y;
-            kMouseButton button;
-        } button;
+        kMouseButtonEvent button;
 
         struct {
             int x, y;
             int dx, dy; // relative
         } motion;
 
-        struct {
-            int x, y;
-        } wheel;
+        kMouseWheelEvent wheel;
 
         struct {
             char text[KTEXTINPUTEVENT_TEXT_SIZE];
@@ -107,14 +113,3 @@ typedef struct {
 
 // Event poll function
 int kPollEvent(kEvent* ev);
-
-// typedef struct kMouseMotionEvent {
-//     kEventType type;
-//     Uint32 state;
-//     Sint32 x;
-//     Sint32 y;
-// } kMouseMotionEvent;
-
-// typedef struct kMouseButtonEvent {
-//     kEventType type;
-// } kMouseButtonEvent;
