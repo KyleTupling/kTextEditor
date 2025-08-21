@@ -91,6 +91,7 @@ void app_run(App* app)
 
         renderer_clear(app->renderer);    
 
+        window_update(&app->window, delta_time);
         editor_update(&app->editor, delta_time);
 
         window_render(&app->window, app->renderer);
@@ -99,6 +100,7 @@ void app_run(App* app)
         if (app->state == APP_STATE_EDITOR)
         {
             SDL_RenderSetViewport(app->renderer->sdl_renderer, &editor_bounds);
+            app->editor.viewport_width  = editor_bounds.w;
             app->editor.viewport_height = editor_bounds.h;
             editor_render(&app->editor, app->renderer);
             SDL_RenderSetViewport(app->renderer->sdl_renderer, NULL);
