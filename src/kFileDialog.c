@@ -67,6 +67,7 @@ static void set_selected_file(kFileDialog* dialog)
     snprintf(dialog->selected_file, sizeof(dialog->selected_file), "%s/%s",
              dialog->current_path,
              dialog->entries[dialog->selected_index]);
+    kFileDialog_close(dialog);
 }
 
 void kFileDialog_init(kFileDialog* dialog, const char* start_path, int x, int y, int width, int height)
