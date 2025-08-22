@@ -9,6 +9,8 @@
 
 static kFileDialog dialog;
 
+static bool draw_help = false;
+
 bool app_init(App* app)
 {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) return false;
@@ -70,11 +72,15 @@ void app_run(App* app)
                 else if (app->state == APP_STATE_FILE_DIALOG)
                 {
                     kFileDialog_handle_event(&dialog, &event);
-                    if (*dialog.selected_file != '\0')
+                    if (!kFileDialog_is_open(&dialog))
                     {
-                        if(!editor_load_file(&app->editor, kFileDialog_get_selected(&dialog)))
+                        // Only attempt to load the file if one was selected
+                        if (*dialog.selected_file != '\0')
                         {
-                            fprintf(stderr, "Failed to load file: %s\n", kFileDialog_get_selected(&dialog));
+                            if(!editor_load_file(&app->editor, kFileDialog_get_selected(&dialog)))
+                            {
+                                fprintf(stderr, "Failed to load file: %s\n", kFileDialog_get_selected(&dialog));
+                            }
                         }
                         app->state = APP_STATE_EDITOR;
                     }
@@ -83,8 +89,21 @@ void app_run(App* app)
                 // Switch to file dialog state on F4
                 if (event.type == KEVENT_KEYDOWN && event.key.sym == KKEY_F4)
                 {
-                    kFileDialog_open(&dialog);
-                    app->state = APP_STATE_FILE_DIALOG;
+                    if (kFileDialog_is_open(&dialog))
+                    {
+                        kFileDialog_close(&dialog);
+                    }
+                    else
+                    {
+                        kFileDialog_open(&dialog);
+                        app->state = APP_STATE_FILE_DIALOG;
+                    }
+                    
+                }
+
+                if (event.type == KEVENT_KEYDOWN && event.key.sym == KKEY_F6)
+                {
+                    draw_help = !draw_help;
                 }
             }
         }
@@ -129,6 +148,32 @@ void app_run(App* app)
         // char fps_buffer[100];
         // sprintf(fps_buffer, "%.0f", 1.0f / (delta_time > 0.0001f ? delta_time : 0.0001f));
         // renderer_draw_text(app->renderer, fps_buffer, WINDOW_WIDTH - 100, 20, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 12), ALIGN_CENTER, fps_color);
+
+        SDL_Color help_bg = {40, 40, 40, 200};
+        SDL_Color text_color = {255, 255, 255, 200};
+        if (draw_help)
+        {
+            renderer_draw_rect(app->renderer, WINDOW_WIDTH - 300, 40, 290, 600, help_bg);
+            renderer_draw_text(app->renderer, "Controls", WINDOW_WIDTH - 300 + 150, 50, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 18), ALIGN_CENTER, text_color);
+            renderer_draw_text(app->renderer, "F6 to close", WINDOW_WIDTH - 300 + 150, 70, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 14), ALIGN_CENTER, text_color);
+
+            renderer_draw_text(app->renderer, "Editor", WINDOW_WIDTH - 300 + 150, 110, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 16), ALIGN_CENTER, text_color);
+
+            renderer_draw_text(app->renderer, "F1           : Decrease font size", WINDOW_WIDTH - 300 + 10, 130, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 14), ALIGN_LEFT, text_color);
+            renderer_draw_text(app->renderer, "F2           : Increase font size", WINDOW_WIDTH - 300 + 10, 150, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 14), ALIGN_LEFT, text_color);
+            renderer_draw_text(app->renderer, "F4           : Open file dialog", WINDOW_WIDTH - 300 + 10, 170, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 14), ALIGN_LEFT, text_color);
+            renderer_draw_text(app->renderer, "F5           : Save file", WINDOW_WIDTH - 300 + 10, 190, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 14), ALIGN_LEFT, text_color);
+            renderer_draw_text(app->renderer, "SHIFT + ARROW: Highlight text", WINDOW_WIDTH - 300 + 10, 210, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 14), ALIGN_LEFT, text_color);
+        
+            renderer_draw_text(app->renderer, "File Dialog", WINDOW_WIDTH - 300 + 150, 250, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 16), ALIGN_CENTER, text_color);
+            renderer_draw_text(app->renderer, "ARROW : Navigate dialog", WINDOW_WIDTH - 300 + 10, 270, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 14), ALIGN_LEFT, text_color);
+            renderer_draw_text(app->renderer, "RETURN: Select file/folder", WINDOW_WIDTH - 300 + 10, 290, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 14), ALIGN_LEFT, text_color);
+        }
+        else
+        {
+            renderer_draw_rect(app->renderer, WINDOW_WIDTH - 300, 40, 290, 45, help_bg);
+            renderer_draw_text(app->renderer, "Press F6 for help", WINDOW_WIDTH - 300 + 150, 50, font_manager_get_font("resources/fonts/SourceCodePro-Bold.ttf", 18), ALIGN_CENTER, text_color);
+        }
 
         renderer_present(app->renderer);
     }
