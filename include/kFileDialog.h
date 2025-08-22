@@ -1,3 +1,17 @@
+/**
+ * Notes on usage:
+ *      - When a file is selected (i.e. the user has picked a file), the selected_file
+ *        property will be set to the absolute path of the selected file and the dialog
+ *        will be closed. There are also scenarios in which the dialog may close without
+ *        a file having been selected. This means that, for smoothest functionality,
+ *        higher-level checks should be performed in this order:
+ *          1. Has the dialog closed?
+ *          2. Was selected_file set?
+ * 
+ *        I'll probably update this at some point to use file_selected callbacks or
+ *        something similar to give easier flow control.
+ */
+
 #pragma once
 
 #include <stdbool.h>
